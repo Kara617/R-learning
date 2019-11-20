@@ -1,0 +1,57 @@
+---
+title: "R Data Structure"
+output: html_notebook
+---
+
+类别（名义型）变量和有序类别（有序型）变量在R中称为因子（factor）。因子在R中非常重要，因为它决定了数据的分析方式。
+
+```{r}
+# factor()函数
+diabetes <- c("Type1", "Type2", "Type1", "Type1")
+diabetes <- factor(diabetes)
+```
+
+语句diabetes <- factor(diabetes)将此向量存储为(1, 2, 1, 1)，并在内部将其关联为
+1=Type1和2=Type2（具体赋值根据字母顺序而定）。针对向量diabetes进行的任何分析都会将其作为名义型变量对待，并自动选择适合这一测量尺度①的统计方法。
+
+**要表示有序型变量**，需要为函数factor()指定参数ordered = TRUE
+
+```{r}
+status <- c("Poor", "Improved", "Excellent", "Poor")
+status <- factor(status, ordered = T)
+status
+```
+注意到因子的编码有问题，与逻辑顺序相反，因为默认的因子排序为字母顺序。
+为了解决这一问题，需要指定levels来覆盖默认排序
+
+```{r}
+status <- c("Poor", "Improved", "Excellent", "Poor")
+status <- factor(status, order = T,
+                 levels = c("Poor", "Improved","Excellent"))
+status
+```
+
+**数值型变量**可以用levels和labels参数来编码成因子。
+```{r}
+# sex <- factor(sex, levels = c(1, 2), 
+#               labels = c("Male", "Female"))
+```
+普通因子和有序因子的不同是如何影响数据分析的？
+```{r}
+patientID <- c(1, 2, 3, 4)
+age <- c(25, 34, 28, 52)
+diabetes <- c("Type1", "Type2", "Type1", "Type1")
+status <- c("Poor", "Improved", "Excellent", "Poor")
+diabetes <- factor(diabetes)
+status <- factor(status, order = T)
+patientdata <- data.frame(patientID, age, diabetes, status)
+str(patientdata) 
+# 显示对象的结构
+```
+**str() function**:
+Compactly Display the Structure of an Arbitrary R Object
+
+```{r}
+summary(patientdata)
+```
+注意到summary()函数会区别显示因子变量的统计特征。
