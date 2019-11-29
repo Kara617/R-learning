@@ -1,0 +1,188 @@
+---
+title: "Clustering Methods"
+author: "Kara"
+date: "2019/11/28"
+output: html_document
+---
+
+>Clustering refers to a very broad set of techniques for finding subgroups.
+
+聚类要求我们定义（对两个观测）什么是相似(similar)，什么是不同(different)。
+聚类和主成分分析都希望通过一小部分的总体来简化数据，但是他们的机制是不同的：
+
+通过市场细分来识别人群的子群体；更能够去购买一种特定的商品。
+
+两种best-known clustering方法：
+1. Kmeans K个类别
+2. Hierarchical clustering 类别未知
+
+dendrogram 树状图
+基于特征来聚类或者基于观测样本来发现子群体
+
+### K-Means Clustering
+K distinct, non-overlapping clusters.
+为了完成K-means聚类，我们可以先确定想要的K类别个数
+
+K-Means想要使得within-cluster variation之和达到最小，有很多可能的方法。
+最常用的是squared Euclidean distance
+
+```{r}
+rm(list = ls())
+set.seed(2)
+x = matrix(rnorm(50 * 2), ncol = 2)
+x[1:25, 1] <- x[1:25, 1] + 3
+x[1:25, 2] <- x[1:25, 2] - 4
+```
+
+```{r}
+plot(x)
+```
+
+```{r}
+km.out <- kmeans(x, 2, nstart = 20)
+km.out$cluster
+```
+```{r}
+plot(x, col = (km.out$cluster + 1),
+     main = "K-Means Clustering Results with K=2",
+     xlab = "",
+     ylab = "",
+     pch = 20,
+     cex = 2)
+```
+上述观测能够轻易地画出图像，是因为他们是二维的数据，如果是三维及以上则可以展示PCA和第一、二主成分的score vectors
+
+现实中，我们不一定能提前知道真正的类别数，对上述例子尝试拟合3类即K=3
+```{r}
+set.seed(4)
+km.out = kmeans(x, 3, nstart = 20)
+km.out
+```
+If a value of nstart greater than one is used, then K-means clustering will be performed using multiple random assignments in Step 1 of Algorithm 10.1
+下面比较nstart=1和nstart=20的情形
+```{r}
+set.seed(3)
+km.out1 = kmeans(x, 3, nstart = 1)
+km.out1$tot.withinss
+```
+```{r}
+km.out = kmeans(x, 3, nstart = 20)
+km.out$tot.withinss
+```
+
+tot.withinss是总的cluster内的总平方和
+
+### Hierarchical Clustering
+
+hclust()函数能够执行hierarchical clustering
+The dist() function is used to compute the 50 × 50 inter-observation Euclidean distance matrix.
+**complete linkage**
+```{r}
+hc.complete = hclust(dist(x), method = "complete")
+```
+
+```{r}
+hc.average = hclust(dist(x), method = "average")
+hc.single = hclust(dist(x), method = "single")
+```
+
+```{r}
+par(mfrow = c(1, 3))
+plot(hc.complete, main = "Complete Linkage",
+     xlab = "", sub = "", cex = .9)
+plot(hc.average, main = "Average Linkage",
+     xlab = "", sub = "", cex = .9)
+plot(hc.single, main = "Single Linkage",
+     xlab = "", sub = "", cex = .9)
+```
+
+```{r}
+cutree(hc.complete, 2)
+cutree(hc.average, 2)
+cutree(hc.single, 2) # single linkage的情形只有1个观测被归为第2类
+```
+
+```{r}
+cutree(hc.single, 4) # two singletons
+```
+**scale the variables before clustering**
+```{r}
+xsc = scale(x)
+plot(hclust(dist(xsc), method = "complete"), main = "Hierarchical Clustering with Scaled Features")
+```
+correlation-based distance can be computed using the as.dist() function.
+**only make sense for data with at least three features** since the absolute correlation between any two observations with measurements on two features is always 1.
+```{r}
+x = matrix(rnorm(30*3), ncol = 3)
+dd = as.dist(1-cor(t(x)))
+# correlation-based distance can be computed using the as.dist() function.
+plot(hclust(dd, method = "complete"),
+     main = "Complete Linkage with Correlation-Based Distance",
+     xlab = "",
+     sub = "")
+```
+
+### NCI60 数据案例
+cancer cell line microarray data
+```{r}
+library(ISLR)
+nci.labs = NCI60$labs
+nci.data = NCI60$data
+dim(nci.data)
+```
+```{r}
+nci.labs[1:4]
+```
+```{r}
+table(nci.labs) #频数图
+```
+finding out whether or not the observations cluster into distinct types of cancer
+```{r}
+# 【scale】optional： if we want each gene to be on the same scale
+sd.data = scale(nci.data)
+```
+
+```{r}
+par(mfrow = c(1, 3))
+data.dist = dist(sd.data)
+plot(hclust(data.dist), labels = nci.labs, main = "Complete Linkage",
+     xlab = "", sub = "", ylab = "")
+plot(hclust(data.dist, method = "average"), 
+     labels = nci.labs, main = "Complete Linkage",
+     xlab = "", sub = "", ylab = "")
+plot(hclust(data.dist, method = "single"), 
+     labels = nci.labs, main = "Single Linkage",
+     xlab = "", sub = "", ylab = "")
+```
+
+```{r}
+hc.out = hclust(dist(sd.data))
+hc.cl = cutree(hc.out, 4)
+table(hc.cl, nci.labs)
+```
+```{r}
+```
+
+
+```{r}
+par(mfrow = c(1, 1))
+plot(hc.out, labels = nci.labs)
+abline(h = 139, col = "red")
+```
+```{r}
+hc.out
+```
+How do these NCI60 hierarchical clustering results compare to what we get if we perform K-means clustering with K =4?
+```{r}
+set.seed(2)
+km.out = kmeans(sd.data, 4, nstart = 20)
+km.cl = km.out$cluster
+table(km.cl, hc.cl) # 重合数目？
+```
+可以使用部分数据进行系统聚类
+```{r}
+pr.out =prcomp (nci.data , scale=TRUE)
+hc.out = hclust(dist(pr.out$x[,1:5]))
+plot(hc.out, labels = nci.labs, main = "Hier.Clust. on First Five Score Vectors")
+table(cutree(hc.out, 4), nci.labs)
+```
