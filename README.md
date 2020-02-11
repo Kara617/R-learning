@@ -10,7 +10,7 @@ Download a popular software to code with R via [RStudio](https://rstudio.com/)
 _**An Introduction to R**_
 Gives an introduction to the language and how to use R for doing statistical analysis and graphics.  
 
-_**R Data Import/Export**_
+  _**R Data Import/Export**_
 
 * Others:
 1. Introduction to Statistical Learning with R  
